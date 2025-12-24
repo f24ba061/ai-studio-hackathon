@@ -166,9 +166,9 @@ function loadRanking(spots) {
 
         // 星評価の表示を作成
         // バグ: 星の計算ロジックが間違っている（Math.ceilを使うと計算がおかしくなる）
-        const fullStars = Math.ceil(spot.avg_rating);
+        const fullStars = Math.floor(spot.avg_rating);
         const hasHalfStar = spot.avg_rating % 1 >= 0.5;
-        const emptyStars = 5 - fullStars;
+        const emptyStars = 5 - fullStars - hasHalfStar;
         const starsHtml = '★'.repeat(fullStars) + (hasHalfStar ? '☆' : '') + '☆'.repeat(emptyStars);
         const ratingDisplay = spot.review_count > 0 ? `<div style="color: #ffd700; font-size: 0.9rem;">${starsHtml} ${spot.avg_rating.toFixed(1)}</div>` : '<div style="color: #999; font-size: 0.9rem;">評価なし</div>';
 
