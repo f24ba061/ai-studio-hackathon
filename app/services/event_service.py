@@ -21,6 +21,10 @@ class EventService:
         """地域別でイベントを取得"""
         return self.event_repo.find_by_area(area)
 
+    def get_events_by_month_and_area(self, month, area):
+        """月と地域の両方でイベントを取得"""
+        return self.event_repo.find_by_month_and_area(month, area)
+
     def search_events(self, keyword):
         """キーワードでイベントを検索"""
         return self.event_repo.find_by_keyword(keyword)

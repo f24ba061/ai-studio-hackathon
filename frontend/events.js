@@ -1,5 +1,5 @@
 let allEvents = [];
-let currentFilter = { type: 'all', value: 'all' };
+let currentFilter = {month: 'all', area: 'all'};
 
 // データベースからイベントを読み込んで表示
 async function loadEventsFromDatabase() {
@@ -78,27 +78,16 @@ function displayEvents(events) {
 // 月別フィルタリング
 async function filterByMonth(month, clickedButton) {
     const monthButtons = document.querySelectorAll('#monthFilter .filter-btn');
-    const areaButtons = document.querySelectorAll('#areaFilter .filter-btn');
 
-    // 月別フィルターのボタンをアクティブに
+    // ボタンUI更新
     monthButtons.forEach(btn => btn.classList.remove('active'));
-    if (clickedButton) {
-        clickedButton.classList.add('active');
-    }
+    if (clickedButton) clickedButton.classList.add('active');
 
-    // バグ: 地域フィルターをリセットしているため、同時に使えない
-    areaButtons.forEach(btn => btn.classList.remove('active'));
-    areaButtons[0].classList.add('active');
-
-    currentFilter = { type: 'month', value: month };
+    // 月だけ更新
+    currentFilter.month = month;
 
     try {
-        let events;
-        if (month === 'all') {
-            events = await apiClient.getEvents();
-        } else {
-            events = await apiClient.getEventsByMonth(month);
-        }
+        const events = await fetchFilteredEvents();
         displayEvents(events);
     } catch (error) {
         console.error('月別フィルターエラー:', error);
@@ -109,33 +98,23 @@ async function filterByMonth(month, clickedButton) {
 // 地域別フィルタリング
 async function filterByArea(area, clickedButton) {
     const areaButtons = document.querySelectorAll('#areaFilter .filter-btn');
-    const monthButtons = document.querySelectorAll('#monthFilter .filter-btn');
 
-    // 地域別フィルターのボタンをアクティブに
+    // ボタンUI更新
     areaButtons.forEach(btn => btn.classList.remove('active'));
-    if (clickedButton) {
-        clickedButton.classList.add('active');
-    }
+    if (clickedButton) clickedButton.classList.add('active');
 
-    // バグ: 月別フィルターをリセットしているため、同時に使えない
-    monthButtons.forEach(btn => btn.classList.remove('active'));
-    monthButtons[0].classList.add('active');
-
-    currentFilter = { type: 'area', value: area };
+    // ⭐ 地域だけ更新
+    currentFilter.area = area;
 
     try {
-        let events;
-        if (area === 'all') {
-            events = await apiClient.getEvents();
-        } else {
-            events = await apiClient.getEventsByArea(area);
-        }
+        const events = await fetchFilteredEvents();
         displayEvents(events);
     } catch (error) {
         console.error('地域別フィルターエラー:', error);
         alert('フィルター処理に失敗しました');
     }
 }
+
 
 // 検索機能
 async function searchEvents() {
@@ -158,6 +137,30 @@ async function searchEvents() {
         searchResultInfo.textContent = '検索に失敗しました';
     }
 }
+
+//フィルター状態に応じてAPIを切り替える共通関数
+async function fetchFilteredEvents() {
+    const { month, area } = currentFilter;
+
+    // 両方指定
+    if (month !== 'all' && area !== 'all') {
+        return await apiClient.getEventsByMonthAndArea(month, area);
+    }
+
+    // 月のみ
+    if (month !== 'all') {
+        return await apiClient.getEventsByMonth(month);
+    }
+
+    // 地域のみ
+    if (area !== 'all') {
+        return await apiClient.getEventsByArea(area);
+    }
+
+    // 全件
+    return await apiClient.getEvents();
+}
+
 
 // 検索をクリア
 function clearSearch() {
