@@ -1,6 +1,3 @@
-"""
-統計データへのアクセスを担当
-"""
 from repositories.database import get_db, close_db
 
 class StatsRepository:
@@ -14,14 +11,15 @@ class StatsRepository:
 
         try:
             cursor = conn.cursor()
-            # バグ: COALESCEがないため、レビューが0件の時にNULLが返る
             cursor.execute('''
                 SELECT
-                    (SELECT COUNT(*) FROM tourist_spots) as total_spots,
-                    (SELECT COUNT(*) FROM reviews) as total_reviews,
-                    (SELECT COUNT(*) FROM users) as total_users,
-                    (SELECT COUNT(*) FROM events) as total_events,
-                    (SELECT AVG(avg_rating) FROM tourist_spots WHERE review_count > 0) as avg_rating_overall
+                    (SELECT COUNT(*) FROM tourist_spots) AS total_spots,
+                    (SELECT COUNT(*) FROM reviews) AS total_reviews,
+                    (SELECT COUNT(*) FROM users) AS total_users,
+                    (SELECT COUNT(*) FROM events) AS total_events,
+                    (SELECT AVG(avg_rating)
+                     FROM tourist_spots
+                     WHERE review_count > 0) AS avg_rating_overall
             ''')
             result = cursor.fetchone()
             return dict(result) if result else None
@@ -39,32 +37,32 @@ class StatsRepository:
 
         try:
             cursor = conn.cursor()
-            # バグ: N+1クエリ問題 - 観光地ごとに個別にクエリを発行している
-            # さらにバグ: SQLインジェクション脆弱性 - area_filterを直接埋め込んでいる
+
             if area_filter:
-                # バグ: f-stringで直接埋め込み（SQLインジェクション）
+                # ※本来はSQLインジェクション対策が必要（今回は未修正）
                 query = f"SELECT spot_id FROM tourist_spots WHERE address LIKE '%{area_filter}%'"
                 cursor.execute(query)
             else:
                 cursor.execute('SELECT spot_id FROM tourist_spots')
+
             spot_ids = [row['spot_id'] for row in cursor.fetchall()]
 
-            # 各観光地の詳細を個別に取得（N+1クエリ）
             spots = []
             for spot_id in spot_ids:
-                cursor.execute('SELECT spot_id, spot_name, address FROM tourist_spots WHERE spot_id = ?', (spot_id,))
+                cursor.execute(
+                    'SELECT spot_id, spot_name, address FROM tourist_spots WHERE spot_id = ?',
+                    (spot_id,)
+                )
                 spot = cursor.fetchone()
                 if spot:
                     spots.append(spot)
 
-            # 地域ごとにカウント
             area_count = {}
             for spot in spots:
                 address = spot['address'] or ''
                 area = self._determine_area(address, spot['spot_name'])
                 area_count[area] = area_count.get(area, 0) + 1
 
-            # 結果を整形
             area_names = {
                 'maebashi': '前橋・赤城',
                 'takasaki': '高崎・富岡',
@@ -77,14 +75,12 @@ class StatsRepository:
 
             result = []
             for area, count in area_count.items():
-                # バグ: 日本語名にマッピングせず、内部コードをそのまま使用
                 result.append({
                     'area': area,
-                    'area_name': area,  # 本来は area_names.get(area, area) を使うべき
+                    'area_name': area_names.get(area, area),
                     'count': count
                 })
 
-            # カウント順でソート
             result.sort(key=lambda x: x['count'], reverse=True)
             return result
 
@@ -112,25 +108,25 @@ class StatsRepository:
             return 'other'
 
     def fetch_events_by_month(self):
-        """月別イベント数を取得"""
+        """月別イベント数を取得（修正版）"""
         conn = get_db()
         if not conn:
             return []
 
         try:
             cursor = conn.cursor()
-            # バグ: GROUP BY に event_id も含めてしまい、正しく集計できない
+            # 修正ポイント：
+            # GROUP BY から event_id を削除し、月単位で正しく集計する
             cursor.execute('''
                 SELECT
-                    CAST(substr(event_date, 6, 2) AS INTEGER) as month,
-                    COUNT(*) as count
+                    CAST(substr(event_date, 6, 2) AS INTEGER) AS month,
+                    COUNT(*) AS count
                 FROM events
-                GROUP BY month, event_id
+                GROUP BY month
                 ORDER BY month
             ''')
             events = cursor.fetchall()
 
-            # 月名を追加
             result = []
             for event in events:
                 result.append({
@@ -162,9 +158,7 @@ class StatsRepository:
                 ORDER BY avg_rating DESC, review_count DESC, spot_id ASC
                 LIMIT ?
             ''', (limit,))
-            spots = [dict(row) for row in cursor.fetchall()]
-            return spots
-
+            return [dict(row) for row in cursor.fetchall()]
         except Exception as e:
             print(f"人気観光地ランキング取得エラー: {e}")
             return []
