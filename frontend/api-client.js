@@ -267,10 +267,10 @@ class APIClient {
 function formatDistance(meters) {
     if (meters >= 1000) {
         // バグ: return文がない
-        (meters / 1000).toFixed(1) + 'km';
+        return (meters / 1000).toFixed(1) + 'km';
     } else {
         // バグ: return文がない
-        meters + 'm';
+        return meters + 'm';
     }
 }
 
