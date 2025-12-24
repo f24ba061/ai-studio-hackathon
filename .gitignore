@@ -1,0 +1,31 @@
+# Python関連
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# データベースファイル
+*.db
+*.db-journal
+data/
+
+# 環境変数
+.env
+.env.local
+
+# IDE関連
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS関連
+.DS_Store
+Thumbs.db
+
+# ログ
+*.log

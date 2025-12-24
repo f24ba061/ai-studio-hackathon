@@ -1,0 +1,137 @@
+name: Auto Grading
+
+# プルリクエストにラベルが付けられた時、または更新された時に実行
+on:
+  pull_request:
+    types: [labeled, synchronize]
+
+jobs:
+  # ============================================================================
+  # テスト実行 (全レベル・全Issue)
+  # ============================================================================
+  auto-grade:
+    # ラベルが level_X/Y の形式の時のみ実行
+    if: |
+      github.event.action == 'labeled' && startsWith(github.event.label.name, 'level_') ||
+      github.event.action == 'synchronize'
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          # Level 1 (A-J)
+          - {level: 1, issue: A}
+          - {level: 1, issue: B}
+          - {level: 1, issue: C}
+          - {level: 1, issue: D}
+          - {level: 1, issue: E}
+          - {level: 1, issue: F}
+          - {level: 1, issue: G}
+          - {level: 1, issue: H}
+          - {level: 1, issue: I}
+          - {level: 1, issue: J}
+          # Level 2 (A-J)
+          - {level: 2, issue: A}
+          - {level: 2, issue: B}
+          - {level: 2, issue: C}
+          - {level: 2, issue: D}
+          - {level: 2, issue: E}
+          - {level: 2, issue: F}
+          - {level: 2, issue: G}
+          - {level: 2, issue: H}
+          - {level: 2, issue: I}
+          - {level: 2, issue: J}
+          # Level 3 (A-L)
+          - {level: 3, issue: A}
+          - {level: 3, issue: B}
+          - {level: 3, issue: C}
+          - {level: 3, issue: D}
+          - {level: 3, issue: E}
+          - {level: 3, issue: F}
+          - {level: 3, issue: G}
+          - {level: 3, issue: H}
+          - {level: 3, issue: I}
+          - {level: 3, issue: J}
+          - {level: 3, issue: K}
+          - {level: 3, issue: L}
+          # Level 4 (A-G)
+          - {level: 4, issue: A}
+          - {level: 4, issue: B}
+          - {level: 4, issue: C}
+          - {level: 4, issue: D}
+          - {level: 4, issue: E}
+          - {level: 4, issue: F}
+          - {level: 4, issue: G}
+          # Level 5 (A-G)
+          - {level: 5, issue: A}
+          - {level: 5, issue: B}
+          - {level: 5, issue: C}
+          - {level: 5, issue: D}
+          - {level: 5, issue: E}
+          - {level: 5, issue: F}
+          - {level: 5, issue: G}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # このジョブが該当するラベルを持っているかチェック
+      - name: Check if this job should run
+        id: check
+        run: |
+          if echo "${{ toJson(github.event.pull_request.labels.*.name) }}" | grep -q "level_${{ matrix.level }}/${{ matrix.issue }}"; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and start Docker container
+        if: steps.check.outputs.should_run == 'true'
+        run: |
+          docker compose build
+          docker compose up -d
+          sleep 10
+
+      - name: Run Level ${{ matrix.level }}-${{ matrix.issue }} Test
+        if: steps.check.outputs.should_run == 'true'
+        id: test
+        run: |
+          docker exec gunma-tourism-app python3 tests/level_${{ matrix.level }}/test_${{ matrix.issue }}.py > test_output.txt 2>&1
+          cat test_output.txt
+        continue-on-error: true
+
+      - name: Stop application
+        if: steps.check.outputs.should_run == 'true' && always()
+        run: docker compose down
+
+      - name: Comment test result
+        if: steps.check.outputs.should_run == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const testPassed = ${{ steps.test.outcome == 'success' }};
+
+            // テストスクリプトの出力を読み込む
+            let testOutput = '';
+            try {
+              testOutput = fs.readFileSync('test_output.txt', 'utf8');
+            } catch (error) {
+              testOutput = 'テスト出力の読み込みに失敗しました';
+            }
+
+            // コメントを作成
+            const statusEmoji = testPassed ? '✅' : '❌';
+            const statusText = testPassed ? '合格' : '不合格';
+            const message = statusEmoji + ' **' + statusText + '** - Level ${{ matrix.level }} Issue ${{ matrix.issue }}\n\n```\n' + testOutput + '\n```';
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: message
+            });
+
+      - name: Check test result
+        if: steps.check.outputs.should_run == 'true' && steps.test.outcome != 'success'
+        run: exit 1

@@ -1,0 +1,15 @@
+services:
+  web:
+    build: .
+    container_name: gunma-tourism-app
+    ports:
+      - "3001:3001"
+    volumes:
+      # データベースファイルを永続化（コンテナ削除後もデータを保持）
+      - ./data:/app/data
+      # レビュー画像ディレクトリをマウント（level_4/Aの再現に必要）
+      - ./frontend/assets/images/reviews:/app/frontend/assets/images/reviews
+    environment:
+      - FLASK_ENV=development
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped

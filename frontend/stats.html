@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>統計情報 - 群馬県観光ポータル</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="api-client.js"></script>
+    <style>
+        .stats-header {
+            background: linear-gradient(135deg, #7b68ee 0%, #9b88ff 100%);
+            padding: 20px 0;
+            color: white;
+        }
+
+        .stats-header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            padding: 40px 0;
+        }
+
+        .stats-card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stats-card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #333;
+            border-bottom: 3px solid #7b68ee;
+            padding-bottom: 10px;
+        }
+
+        /* 基本統計カード */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .stat-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            display: block;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #7b68ee;
+        }
+
+        /* 人気ランキング */
+        .ranking-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+
+        .ranking-item:hover {
+            transform: translateX(5px);
+            background: #e9ecef;
+        }
+
+        .ranking-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #7b68ee;
+            margin-right: 15px;
+            min-width: 40px;
+        }
+
+        .ranking-medal {
+            font-size: 1.8rem;
+            margin-right: 10px;
+        }
+
+        .ranking-info {
+            flex: 1;
+        }
+
+        .ranking-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .ranking-rating {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* 棒グラフ共通 */
+        .bar-chart {
+            margin-top: 10px;
+        }
+
+        .bar-chart-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .bar-chart-label {
+            min-width: 120px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .bar-chart-bar-container {
+            flex: 1;
+            height: 28px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin: 0 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-chart-bar {
+            height: 100%;
+            background: linear-gradient(135deg, #7b68ee 0%, #9b88ff 100%);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+        }
+
+        .bar-chart-value {
+            font-weight: bold;
+            color: #333;
+            min-width: 30px;
+            text-align: right;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .bar-chart-label {
+                min-width: 80px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ヘッダー -->
+    <header class="stats-header">
+        <div class="container">
+            <div class="stats-header-content">
+                <h1 class="page-title">📊 統計情報</h1>
+                <nav>
+                    <a href="index.html" class="nav-link">トップ</a>
+                    <a href="spots.html" class="nav-link">観光地</a>
+                    <a href="events.html" class="nav-link">イベント</a>
+                    <a href="stats.html" class="nav-link active">統計</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main>
+        <div class="container">
+            <div class="stats-container" id="statsContainer">
+                <!-- 基本統計 -->
+                <div class="stats-card summary-card">
+                    <h2>📊 基本統計</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">登録観光地数</span>
+                            <span class="stat-value" id="totalSpots">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">総レビュー数</span>
+                            <span class="stat-value" id="totalReviews">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">登録ユーザー数</span>
+                            <span class="stat-value" id="totalUsers">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">開催予定イベント</span>
+                            <span class="stat-value" id="totalEvents">-</span>
+                        </div>
+                    </div>
+                    <div class="stat-item" style="margin-top: 15px;">
+                        <span class="stat-label">総合平均評価</span>
+                        <span class="stat-value" id="avgRating">-</span>
+                    </div>
+                </div>
+
+                <!-- 人気観光地ランキング -->
+                <div class="stats-card ranking-card">
+                    <h2>🏆 人気観光地ランキング TOP5</h2>
+                    <ol id="topSpotsList" class="ranking-list">
+                        <div class="loading">読み込み中...</div>
+                    </ol>
+                </div>
+
+                <!-- 地域別統計 -->
+                <div class="stats-card area-chart-card">
+                    <h2>📍 地域別観光地数</h2>
+                    <div id="areaChart" class="bar-chart">
+                        <div class="loading">読み込み中...</div>
+                    </div>
+                </div>
+
+                <!-- 月別イベント -->
+                <div class="stats-card month-chart-card">
+                    <h2>📅 月別イベント開催数</h2>
+                    <div id="monthChart" class="bar-chart">
+                        <div class="loading">読み込み中...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- フッター -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 群馬県観光ポータル</p>
+        </div>
+    </footer>
+
+    <script src="stats.js"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+# Git関連
+.git
+.github
+.gitignore
+
+# Python関連
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+.pytest_cache
+.coverage
+
+# IDE関連
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS関連
+.DS_Store
+Thumbs.db
+
+# データベースファイル（コンテナ内で新規作成するため）
+tourism_review.db
+tourism_review.db-journal
+*.db
+*.db-journal
+
+# ログファイル
+*.log
+
+# 環境変数ファイル
+.env
+.env.local
+
+# その他
+node_modules
+README.md
+SPECIFICATION.md
+setup/

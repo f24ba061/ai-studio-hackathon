@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>観光地詳細 - 群馬県観光ポータル</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="api-client.js"></script>
+    <style>
+        .breadcrumb {
+            padding: 15px 0;
+            background: #f5f5f5;
+        }
+
+        .breadcrumb ul {
+            list-style: none;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .breadcrumb li::after {
+            content: ">";
+            margin-left: 10px;
+            color: #999;
+        }
+
+        .breadcrumb li:last-child::after {
+            content: "";
+        }
+
+        .breadcrumb a {
+            color: #4a7c59;
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .detail-container {
+            padding: 40px 0;
+        }
+
+        .detail-header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .detail-title {
+            font-size: 2.5rem;
+            color: #2c5f2d;
+            margin-bottom: 20px;
+        }
+
+        .detail-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .detail-image {
+            width: 100%;
+            min-height: 400px;
+            background: #ddd;
+            border-radius: 10px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            color: #999;
+            font-size: 1.2rem;
+            padding: 0;
+        }
+
+        .detail-info {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .info-table {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .info-table tr {
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-table th {
+            text-align: left;
+            padding: 12px 0;
+            color: #666;
+            width: 120px;
+            font-weight: normal;
+        }
+
+        .info-table td {
+            padding: 12px 0;
+        }
+
+        .google-maps-link {
+            color: #4285f4;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .google-maps-link:hover {
+            text-decoration: underline;
+        }
+
+        .description-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .description-section h2 {
+            color: #2c5f2d;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .description-text {
+            line-height: 1.8;
+            color: #333;
+        }
+
+        .review-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .review-section h2 {
+            color: #2c5f2d;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+        }
+
+        .review-form {
+            background: #f9f9f9;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 40px;
+            border: 2px dashed #4a7c59;
+        }
+
+        .review-form h3 {
+            color: #2c5f2d;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .rating-input {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .star-rating {
+            display: flex;
+            gap: 5px;
+        }
+
+        .star {
+            font-size: 1.5rem;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .star:hover,
+        .star.active {
+            color: #ffd700;
+        }
+
+        .submit-btn {
+            padding: 12px 30px;
+            background: #ff6b35;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .submit-btn:hover {
+            background: #e55a2b;
+        }
+
+        .login-notice {
+            text-align: center;
+            padding: 20px;
+            background: #fff3cd;
+            border-radius: 8px;
+            color: #856404;
+            margin-bottom: 30px;
+        }
+
+        .login-notice a {
+            color: #ff6b35;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .reviews-list {
+            display: grid;
+            gap: 20px;
+        }
+
+        .review-item {
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid #4a7c59;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .reviewer-name {
+            font-weight: bold;
+            color: #2c5f2d;
+        }
+
+        .review-date {
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .review-rating {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        .review-text {
+            line-height: 1.6;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .detail-info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .detail-title {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">🗾 群馬県観光ポータル</div>
+                <nav>
+                    <ul>
+                        <li><a href="index.html">ホーム</a></li>
+                        <li><a href="spots.html">観光スポット</a></li>
+                        <li><a href="onsen.html">温泉</a></li>
+                        <li><a href="gourmet.html">グルメ</a></li>
+                        <li><a href="events.html">イベント</a></li>
+                        <li><a href="access.html">アクセス</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="breadcrumb">
+        <div class="container">
+            <ul>
+                <li><a href="index.html">ホーム</a></li>
+                <li><a href="spots.html">観光スポット</a></li>
+                <li>草津温泉湯畑</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container detail-container">
+        <div class="detail-header">
+            <h1 class="detail-title" id="spotTitle">草津温泉湯畑</h1>
+            <div id="spotRating" style="color: #ffd700; font-size: 1.2rem; margin-top: 10px;"></div>
+        </div>
+
+        <div class="detail-info-grid">
+            <div class="detail-image" id="spotImage">草津温泉湯畑の画像</div>
+
+            <div class="detail-info">
+                <table class="info-table">
+                    <tr>
+                        <th>住所</th>
+                        <td id="spotAddress">〒377-1711 群馬県吾妻郡草津町草津</td>
+                    </tr>
+                    <tr>
+                        <th>アクセス</th>
+                        <td id="spotAccess">JR長野原草津口駅からバスで25分</td>
+                    </tr>
+                    <tr>
+                        <th>営業時間</th>
+                        <td id="spotHours">24時間見学可能</td>
+                    </tr>
+                    <tr>
+                        <th>料金</th>
+                        <td id="spotPrice">無料</td>
+                    </tr>
+                    <tr>
+                        <th>地図</th>
+                        <td>
+                            <a href="https://maps.google.com/maps?q=草津温泉湯畑" target="_blank" class="google-maps-link" id="spotMapLink">
+                                📍 Google Mapsで見る
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="description-section">
+            <h2>概要</h2>
+            <div class="description-text" id="spotDescription">
+                <p>草津温泉のシンボル「湯畑」は、毎分4,000リットルもの温泉が湧き出す、日本でも有数の自然湧出量を誇る源泉です。</p>
+                <p>湯畑の周囲には遊歩道が整備され、湯けむりと硫黄の香りに包まれながら散策を楽しめます。夜にはライトアップされ、幻想的な雰囲気に包まれます。</p>
+                <p>湯畑から採取される「湯の花」は草津温泉の特産品として人気があり、お土産としても喜ばれています。周辺には足湯や共同浴場、土産物店、飲食店が立ち並び、温泉街の風情を満喫できます。</p>
+                <p>また、湯もみショーが行われる「熱乃湯」も徒歩圏内にあり、草津温泉の伝統文化に触れることができます。</p>
+            </div>
+        </div>
+
+        <div class="review-section">
+            <h2>レビュー・口コミ</h2>
+
+            <div id="reviewFormArea">
+                <div class="login-notice" id="loginNotice">
+                    レビューを投稿するには<a href="#" onclick="handleLogin()">ログイン</a>が必要です
+                </div>
+
+                <div class="review-form" id="reviewForm" style="display: none;">
+                    <h3>レビューを投稿する</h3>
+                    <form onsubmit="submitReview(event)">
+                        <div class="form-group">
+                            <label for="reviewerName">お名前</label>
+                            <input type="text" id="reviewerName" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>評価</label>
+                            <div class="rating-input">
+                                <div class="star-rating">
+                                    <span class="star" onclick="setRating(1)">★</span>
+                                    <span class="star" onclick="setRating(2)">★</span>
+                                    <span class="star" onclick="setRating(3)">★</span>
+                                    <span class="star" onclick="setRating(4)">★</span>
+                                    <span class="star" onclick="setRating(5)">★</span>
+                                </div>
+                                <input type="hidden" id="ratingValue" value="0" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="reviewText">レビュー内容</label>
+                            <textarea id="reviewText" required placeholder="訪問した感想を教えてください"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="reviewPhoto">写真（任意）</label>
+                            <input type="file" id="reviewPhoto" accept="image/*">
+                            <small style="color: #666; display: block; margin-top: 5px;">JPG, PNG, GIF形式の画像を1枚添付できます（最大5MB）</small>
+                        </div>
+
+                        <button type="submit" class="submit-btn">投稿する</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="reviews-list">
+                <div class="review-item">
+                    <div class="review-header">
+                        <span class="reviewer-name">山田太郎</span>
+                        <span class="review-date">2024年12月1日</span>
+                    </div>
+                    <div class="review-rating">★★★★★</div>
+                    <div class="review-text">
+                        草津温泉のシンボル的存在です。湯けむりが立ち込める様子は圧巻で、硫黄の香りも温泉地らしさを感じさせてくれます。夜のライトアップも幻想的でおすすめです。
+                    </div>
+                </div>
+
+                <div class="review-item">
+                    <div class="review-header">
+                        <span class="reviewer-name">鈴木花子</span>
+                        <span class="review-date">2024年11月28日</span>
+                    </div>
+                    <div class="review-rating">★★★★☆</div>
+                    <div class="review-text">
+                        初めて訪れましたが、想像以上に迫力がありました。周辺の足湯も無料で楽しめて良かったです。ただ、週末は観光客が多くて混雑していました。
+                    </div>
+                </div>
+
+                <div class="review-item">
+                    <div class="review-header">
+                        <span class="reviewer-name">佐藤次郎</span>
+                        <span class="review-date">2024年11月20日</span>
+                    </div>
+                    <div class="review-rating">★★★★★</div>
+                    <div class="review-text">
+                        何度来ても飽きない場所です。季節によって雰囲気が変わり、特に冬の雪景色と湯けむりのコントラストは最高です。湯もみショーも見応えがありました。
+                    </div>
+                </div>
+
+                <div class="review-item">
+                    <div class="review-header">
+                        <span class="reviewer-name">田中美咲</span>
+                        <span class="review-date">2024年11月15日</span>
+                    </div>
+                    <div class="review-rating">★★★★☆</div>
+                    <div class="review-text">
+                        湯畑の周りには美味しい温泉まんじゅうのお店がたくさんあって、食べ歩きも楽しめました。湯畑自体も見応えがあり、草津温泉に来たら必見のスポットだと思います。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>観光情報</h3>
+                    <ul>
+                        <li><a href="spots.html">観光スポット</a></li>
+                        <li><a href="onsen.html">温泉情報</a></li>
+                        <li><a href="gourmet.html">グルメ・特産品</a></li>
+                        <li><a href="accommodation.html">宿泊施設</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>アクセス・交通</h3>
+                    <ul>
+                        <li><a href="access.html">群馬へのアクセス</a></li>
+                        <li><a href="transport.html">県内の交通機関</a></li>
+                        <li><a href="parking.html">駐車場情報</a></li>
+                        <li><a href="map.html">観光マップ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>お役立ち情報</h3>
+                    <ul>
+                        <li><a href="weather.html">天気・気候</a></li>
+                        <li><a href="emergency.html">緊急時の連絡先</a></li>
+                        <li><a href="wifi.html">Wi-Fiスポット</a></li>
+                        <li><a href="credits.html">画像クレジット</a></li>
+                        <li><a href="contact.html">お問い合わせ</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 群馬県観光ポータル. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="spot-detail.js"></script>
+</body>
+</html>

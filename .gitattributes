@@ -1,0 +1,36 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Shell scripts must always use LF (for Linux/Docker compatibility)
+*.sh text eol=lf
+
+# Ensure docker-entrypoint.sh always uses LF
+docker-entrypoint.sh text eol=lf
+
+# Python files
+*.py text eol=lf
+
+# Web files
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+
+# Markdown and documentation
+*.md text eol=lf
+
+# SQL files
+*.sql text eol=lf
+
+# Windows batch files should use CRLF
+*.bat text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.db binary
+*.sqlite binary
+*.sqlite3 binary

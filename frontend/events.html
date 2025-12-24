@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>群馬県イベント情報 - 群馬県観光ポータル</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="api-client.js"></script>
+    <style>
+        .events-header {
+            background: linear-gradient(135deg, #ff6b35 0%, #ff8c61 100%);
+            padding: 20px 0;
+            color: white;
+        }
+
+        .events-header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .events-container {
+            padding: 40px 0;
+        }
+
+        .main-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .search-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: #ff6b35;
+        }
+
+        .search-btn {
+            padding: 12px 30px;
+            background: #ff6b35;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .search-btn:hover {
+            background: #e55a2b;
+        }
+
+        .clear-search-btn {
+            padding: 12px 30px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+
+        .clear-search-btn:hover {
+            background: #5a6268;
+        }
+
+        .search-result-info {
+            margin-top: 10px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .filter-section {
+            margin-bottom: 30px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .filter-btn {
+            padding: 8px 20px;
+            background: #f0f0f0;
+            border: 2px solid transparent;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .filter-btn.active {
+            background: #ff6b35;
+            color: white;
+            border-color: #ff6b35;
+        }
+
+        .events-grid {
+            display: grid;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .event-item {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-left: 4px solid #ff6b35;
+        }
+
+        .event-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .event-date-box {
+            width: 80px;
+            text-align: center;
+            padding: 10px;
+            background: #ff6b35;
+            color: white;
+            border-radius: 8px;
+        }
+
+        .event-month {
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .event-day {
+            font-size: 2rem;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .event-info h3 {
+            margin-bottom: 10px;
+            color: #2c5f2d;
+            font-size: 1.3rem;
+        }
+
+        .event-meta {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .event-location,
+        .event-area,
+        .event-category {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            background: #f0f0f0;
+            border-radius: 15px;
+            font-size: 0.9rem;
+        }
+
+        .event-area {
+            background: #e8f5e9;
+            color: #2c5f2d;
+        }
+
+        .event-category {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .event-description {
+            color: #666;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .event-item {
+                grid-template-columns: 1fr;
+            }
+
+            .event-date-box {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">🗾 群馬県観光ポータル</div>
+                <nav>
+                    <ul>
+                        <li><a href="index.html">ホーム</a></li>
+                        <li><a href="spots.html">観光スポット</a></li>
+                        <li><a href="onsen.html">温泉</a></li>
+                        <li><a href="gourmet.html">グルメ</a></li>
+                        <li><a href="events.html">イベント</a></li>
+                        <li><a href="access.html">アクセス</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="events-header">
+        <div class="container">
+            <div class="events-header-content">
+                <h1 class="page-title">群馬県イベント情報</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="events-container">
+            <main class="main-content">
+                <div class="search-section">
+                    <h2>イベントを検索</h2>
+                    <div class="search-box">
+                        <input type="text"
+                               id="searchInput"
+                               class="search-input"
+                               placeholder="イベント名、場所、説明で検索..."
+                               onkeypress="if(event.key === 'Enter') searchEvents()">
+                        <button class="search-btn" onclick="searchEvents()">検索</button>
+                        <button class="clear-search-btn" onclick="clearSearch()">クリア</button>
+                    </div>
+                    <div id="searchResultInfo" class="search-result-info"></div>
+                </div>
+
+                <div class="filter-section">
+                    <h2>月から探す</h2>
+                    <div class="filter-buttons" id="monthFilter">
+                        <button class="filter-btn active" onclick="filterByMonth('all', this)">すべて</button>
+                        <button class="filter-btn" onclick="filterByMonth('1', this)">1月</button>
+                        <button class="filter-btn" onclick="filterByMonth('2', this)">2月</button>
+                        <button class="filter-btn" onclick="filterByMonth('3', this)">3月</button>
+                        <button class="filter-btn" onclick="filterByMonth('4', this)">4月</button>
+                        <button class="filter-btn" onclick="filterByMonth('5', this)">5月</button>
+                        <button class="filter-btn" onclick="filterByMonth('6', this)">6月</button>
+                        <button class="filter-btn" onclick="filterByMonth('7', this)">7月</button>
+                        <button class="filter-btn" onclick="filterByMonth('8', this)">8月</button>
+                        <button class="filter-btn" onclick="filterByMonth('9', this)">9月</button>
+                        <button class="filter-btn" onclick="filterByMonth('10', this)">10月</button>
+                        <button class="filter-btn" onclick="filterByMonth('11', this)">11月</button>
+                        <button class="filter-btn" onclick="filterByMonth('12', this)">12月</button>
+                    </div>
+                </div>
+
+                <div class="filter-section">
+                    <h2>地域から探す</h2>
+                    <div class="filter-buttons" id="areaFilter">
+                        <button class="filter-btn active" onclick="filterByArea('all', this)">すべて</button>
+                        <button class="filter-btn" onclick="filterByArea('maebashi', this)">前橋・赤城</button>
+                        <button class="filter-btn" onclick="filterByArea('takasaki', this)">高崎・富岡</button>
+                        <button class="filter-btn" onclick="filterByArea('kusatsu', this)">草津・四万</button>
+                        <button class="filter-btn" onclick="filterByArea('minakami', this)">水上・尾瀬</button>
+                        <button class="filter-btn" onclick="filterByArea('ikaho', this)">伊香保・榛名</button>
+                        <button class="filter-btn" onclick="filterByArea('kiryu', this)">桐生</button>
+                        <button class="filter-btn" onclick="filterByArea('tomioka', this)">富岡</button>
+                    </div>
+                </div>
+
+                <div class="events-grid" id="eventsGrid">
+                    <!-- イベントはJavaScriptで動的に読み込まれます -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>観光情報</h3>
+                    <ul>
+                        <li><a href="spots.html">観光スポット</a></li>
+                        <li><a href="onsen.html">温泉情報</a></li>
+                        <li><a href="gourmet.html">グルメ・特産品</a></li>
+                        <li><a href="accommodation.html">宿泊施設</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>アクセス・交通</h3>
+                    <ul>
+                        <li><a href="access.html">群馬へのアクセス</a></li>
+                        <li><a href="transport.html">県内の交通機関</a></li>
+                        <li><a href="parking.html">駐車場情報</a></li>
+                        <li><a href="map.html">観光マップ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>お役立ち情報</h3>
+                    <ul>
+                        <li><a href="weather.html">天気・気候</a></li>
+                        <li><a href="emergency.html">緊急時の連絡先</a></li>
+                        <li><a href="wifi.html">Wi-Fiスポット</a></li>
+                        <li><a href="credits.html">画像クレジット</a></li>
+                        <li><a href="contact.html">お問い合わせ</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 群馬県観光ポータル. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="events.js"></script>
+</body>
+</html>
