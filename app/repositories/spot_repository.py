@@ -1,7 +1,5 @@
-"""
-観光地データへのアクセスを担当
-"""
 from repositories.database import get_db, close_db
+
 
 class SpotRepository:
     """観光地テーブルへのデータアクセス"""
@@ -31,8 +29,7 @@ class SpotRepository:
 
         try:
             cursor = conn.cursor()
-            # APIレスポンスに機密情報を含めてしまう
-            # 本来は観光地情報だけ返すべきなのに、データベースの内部情報も返す
+            # ※ 機密情報を含めている点は既知の問題（今回は未修正）
             cursor.execute('''
                 SELECT *,
                        sqlite_version() as db_version,
@@ -50,19 +47,19 @@ class SpotRepository:
             close_db(conn)
 
     def find_by_keyword(self, keyword):
-        """キーワードで観光地を検索（観光地名、説明、住所から検索）"""
+        """キーワードで観光地を検索"""
         conn = get_db()
         if not conn:
             return []
 
         try:
             cursor = conn.cursor()
-            # GLOB演算子を使うと大文字小文字が区別される
-            # 本来はLIKE演算子を使うべき（LIKEは大文字小文字を区別しない）
             search_keyword = f'%{keyword}%'
             cursor.execute('''
                 SELECT * FROM tourist_spots
-                WHERE spot_name GLOB ? OR description GLOB ? OR address GLOB ?
+                WHERE spot_name GLOB ?
+                   OR description GLOB ?
+                   OR address GLOB ?
                 ORDER BY spot_id
             ''', (search_keyword, search_keyword, search_keyword))
             spots = [dict(row) for row in cursor.fetchall()]
@@ -74,7 +71,7 @@ class SpotRepository:
             close_db(conn)
 
     def update_rating(self, spot_id, avg_rating, review_count):
-        """評価情報を更新（トリガーで自動更新されるが、手動更新も可能）"""
+        """観光地の評価を更新"""
         conn = get_db()
         if not conn:
             return False
@@ -89,10 +86,9 @@ class SpotRepository:
             conn.commit()
             return True
         except Exception as e:
+            conn.rollback()
             print(f"評価更新エラー: {e}")
             return False
-        # データベース接続のリソースリーク
-        # finally句でclose_db(conn)を呼んでいないため、接続が閉じられない
-        # 長時間運用すると接続が蓄積され、最終的に接続数の上限に達してエラーになる
-        # finally:
-        #     close_db(conn)
+        finally:
+            # ★ 修正点：成功・失敗に関わらず必ず接続を解放
+            close_db(conn)
