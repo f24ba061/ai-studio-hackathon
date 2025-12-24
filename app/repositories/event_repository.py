@@ -68,6 +68,30 @@ class EventRepository:
         finally:
             close_db(conn)
 
+    def find_by_month_and_area(self, month, area):
+        """月と地域の両方でイベントを取得"""
+        conn = get_db()
+        if not conn:
+            return []
+
+        try:
+            cursor = conn.cursor()
+            month_str = f'{int(month):02d}'
+            cursor.execute('''
+                SELECT * FROM events
+                WHERE substr(event_date, 6, 2) = ?
+                AND area = ?
+                ORDER BY event_date
+            ''', (month_str, area))
+            events = [dict(row) for row in cursor.fetchall()]
+            return events
+        except Exception as e:
+            print(f"月＋地域イベント取得エラー: {e}")
+            return []
+        finally:
+            close_db(conn)
+
+
     def find_by_keyword(self, keyword):
         """キーワードでイベントを検索（イベント名、場所、説明から検索）"""
         conn = get_db()

@@ -179,6 +179,21 @@ class APIClient {
         }
     }
 
+    // 月 & 地域でイベントを取得
+async getEventsByMonthAndArea(month, area) {
+    try {
+        const response = await fetch(
+            `${this.baseURL}/events?month=${month}&area=${area}`
+        );
+        if (!response.ok) throw new Error('イベントの取得に失敗しました');
+        return await response.json();
+    } catch (error) {
+        console.error('エラー:', error);
+        return [];
+    }
+}
+
+
     // イベントを検索
     async searchEvents(keyword) {
         try {

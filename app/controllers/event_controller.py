@@ -17,8 +17,10 @@ def get_events():
     month = request.args.get('month')
     area = request.args.get('area')
 
-    # フィルター適用
-    if month:
+    # 両方指定されている場合を最優先
+    if month and area:
+        events = event_service.get_events_by_month_and_area(month, area)
+    elif month:
         events = event_service.get_events_by_month(month)
     elif area:
         events = event_service.get_events_by_area(area)
